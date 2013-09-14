@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Cow Demo</title>
+	<script type="text/javascript" src="oogl-1.0.0.min.js"></script>
+</head>
+<body>
+	<canvas id="canvas" width="800" height="600"></canvas>
+	<script type="text/javascript">
+OOGL(function () {
+	OOGL.Ajax.getJSON('cow.json', function (cow) {
+		var indices = (function (faces) {
+			var indices = [];
+			var i = 0;
+			while (i < faces.length) {
+				var type = faces[i];
+				if (type & 1) {
+					indices.push(faces[i + 1]);
+					indices.push(faces[i + 2]);
+					indices.push(faces[i + 3]);
+					indices.push(faces[i + 3]);
+					indices.push(faces[i + 4]);
+					indices.push(faces[i + 1]);
+					i += 5;
+				} else {
+					indices.push(faces[i + 1]);
+					indices.push(faces[i + 2]);
+					indices.push(faces[i + 3]);
+					i += 4
+				}
+				if (type & 2) { // skip face material index
+					i++;
+				}
+				if (type & 4) { // skip face UV index
+					i++;
+				}
+				if (type & 8) { // skip vertex UV indices
+					if (type & 1) {
+						i += 4;
+					} else {
+						i += 3;
+					}
+				}
+				if (type & 16) { // skip face normal index
+					i++;
+				}
+				if (type & 32) { // skip vertex normal indices
+					if (type & 1) {
+						i += 4;
+					} else {
+						i += 3;
+					}
+				}
+				if (type & 64) { // skip face color index
+					i++;
+				}
+				if (type & 128) { // skip vertex color indices
+					if (type & 1) {
+						i += 4;
+					} else {
+						i += 3;
+					}
+				}
+			}
+			return indices;
+		}(cow.faces));
+
+		var oogl = new OOGL.Context('canvas');
+
+		new oogl.AjaxProgram('cow', ['in_Vertex'], function () {
+			this.use();
+
+			var arrays = new oogl.AttributeArrays(cow.metadata.vertices);
+			arrays.add3f(cow.vertices);
+			arrays.enable();
+			arrays.bindAndPointer();
+
+			var elementArray = new oogl.ElementArray(indices);
+			elementArray.bind();
+			elementArray.drawTriangles();
+
+			oogl.flush();
+		});
+	});
+});
+	</script>
+</body>
+</html>
